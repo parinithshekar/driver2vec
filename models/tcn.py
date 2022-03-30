@@ -2,34 +2,33 @@ from matplotlib.style import reload_library
 import torch
 import torch.nn as nn
 from torch.nn.utils import weight_norm
+import numpy as np
 
 class TCN(nn.Module):
-    def __init__(self,input_size,output_size,kernel_size,padding,dilation_base,dropout):
+    def __init__(self,input_size,output_size,kernel_size,dilation_base,dropout):
         super(TCN, self).__init__()
         self.layers = []
 
-        self.num_layers = torch.ceil(torch.log2( ((input_size-1)*(dilation_base-1))/((kernel_size-1)*2) +1 ))
+        self.num_layers = np.ceil(np.log2( ((input_size-1)*(dilation_base-1))/((kernel_size-1)*2) +1 ))
     
-        for i in len(self.num_layers):
+        for i in range(int(self.num_layers)):
             dilation = dilation_base ** i
             if i == 0:
-                layers += [ResidualBlock(input_size,
+                self.layers += [ResidualBlock(input_size,
                                      output_size,
                                      kernel_size,
-                                     stride=1,
                                      dilation=dilation,
                                      padding=(kernel_size - 1) * dilation,
                                      dropout=dropout)]
             else:
-                layers += [ResidualBlock(output_size,
+                self.layers += [ResidualBlock(output_size,
                                      output_size,
                                      kernel_size,
-                                     stride=1,
                                      dilation=dilation,
                                      padding=(kernel_size - 1) * dilation,
                                      dropout=dropout)]
 
-        self.TCNnet = nn.Sequential(*layers)
+        self.TCNnet = nn.Sequential(*self.layers)
 
     def forward(self, x):
         out = self.TCNnet(x)
@@ -42,8 +41,8 @@ class ResidualBlock(nn.Module):
         self.input_size = input_size
         self.output_size = output_size
         
-        self.conv1 = weight_norm(CausalConvLayer(input_size,output_size,kernel_size,padding,dilation))
-        self.conv2 = weight_norm(CausalConvLayer(output_size,output_size,kernel_size,padding,dilation))
+        self.conv1 = weight_norm(CausalConvLayer(input_size,output_size,kernel_size,padding,dilation).conv)
+        self.conv2 = weight_norm(CausalConvLayer(output_size,output_size,kernel_size,padding,dilation).conv)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(dropout)
 
@@ -58,8 +57,8 @@ class ResidualBlock(nn.Module):
 
         self.residual_conv = nn.Conv1d(input_size, output_size, 1)
         #Initialize weights and bias
-        nn.init.kaiming_uniform_(self.resicual_conv.weight)
-        nn.init.kaiming_uniform_(self.resicual_conv.bias)
+        nn.init.kaiming_uniform_(self.residual_conv.weight)
+        #nn.init.kaiming_uniform_(self.residual_conv.bias)
 
     def forward(self, x):
         if self.input_size == self.output_size:
@@ -76,7 +75,7 @@ class CausalConvLayer(nn.Module):
         self.conv = nn.Conv1d(input_size,output_size,kernel_size,stride=1,padding=padding,dilation=dilation)
         #Initialize weights and bias
         nn.init.kaiming_uniform_(self.conv.weight)
-        nn.init.kaiming_uniform_(self.conv.bias)
+        #nn.init.kaiming_uniform_(self.conv.bias)
 
 
     def forward(self, x):

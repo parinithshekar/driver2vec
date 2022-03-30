@@ -8,13 +8,16 @@ from models.d2v import D2V
 def main():
     input_channels = 31
     input_length = 1000
+    output_channels = 32
+    kernel_size = 16
+    dilation_base = 2
+
     inputs = helper.sample_input()
     inputs = torch.Tensor(inputs.to_numpy())
     inputs = inputs.reshape(1, input_channels, input_length)
     splits = torch.split(inputs, input_channels, dim=1)
-    
-    
-    model = D2V(input_channels, input_length)
+      
+    model = D2V(input_channels, input_length, output_channels, kernel_size, dilation_base)
     model(inputs)
     return
     inputs = splits[0]
