@@ -11,4 +11,5 @@ class D2V(nn.Module):
         self.wavelet = HaarWavelet(input_channels, input_length, output_length=15)
     
     def forward(self, input):
-        self.wavelet(input)
+        wavelet_output = self.wavelet(input)
+        print(wavelet_output)
