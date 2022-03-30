@@ -11,9 +11,7 @@ def main():
     inputs = helper.sample_input()
     inputs = torch.Tensor(inputs.to_numpy())
     inputs = inputs.reshape(1, input_channels, input_length)
-    print(inputs.shape)
     splits = torch.split(inputs, input_channels, dim=1)
-    print(len(splits), splits[0].shape)
     
     
     model = D2V(input_channels, input_length)
