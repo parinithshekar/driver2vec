@@ -7,6 +7,9 @@ name = "pypi"
 torch = "*"
 pandas = "*"
 pywavelets = "*"
+pytorch-wavelets = {ref = "master", git = "https://github.com/fbcotter/pytorch_wavelets.git"}
+matplotlib = "*"
+tqdm = "*"
 
 [dev-packages]
 

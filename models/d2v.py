@@ -11,8 +11,9 @@ class D2V(nn.Module):
         self.wavelet = HaarWavelet(input_channels, input_length, output_length=15)
     
     def forward(self, input):
+        # print(f"Input: {input.shape}")
         tcn_output = self.tcn(input)[:, :, -1]
-        print(tcn_output.shape)
+        # print(f"TCN output: {tcn_output.shape}")
         wavelet_output = self.wavelet(input)
-        print(wavelet_output)
+        # print(f"Wavelet output: {wavelet_output.shape}")
         return torch.cat((tcn_output, wavelet_output), dim=1)

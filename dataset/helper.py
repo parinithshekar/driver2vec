@@ -1,3 +1,4 @@
+from genericpath import isfile
 import pandas as pd
 import numpy as np
 import torch
@@ -7,7 +8,13 @@ import os
 DIR = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(DIR, "sample_data")
 
-def sample_input(filename):
+def read_data_from_filepath(filepath):
+    x = pd.read_csv(os.path.join(DATA, filepath))
+    x = x.drop(columns=["Unnamed: 0"])
+    x = x.drop(columns=['FOG', 'FOG_LIGHTS', 'FRONT_WIPERS','HEAD_LIGHTS','RAIN', 'REAR_WIPERS', 'SNOW'])
+    return x
+
+def read_data_from_file(filename):
     x = pd.read_csv(os.path.join(DATA, filename))
     x = x.drop(columns=["Unnamed: 0"])
     x = x.drop(columns=['FOG', 'FOG_LIGHTS', 'FRONT_WIPERS','HEAD_LIGHTS','RAIN', 'REAR_WIPERS', 'SNOW'])
@@ -16,7 +23,7 @@ def sample_input(filename):
 def extract_data(filenames, X_dict):
     for i in range(5):
         for j in range(4):
-            inputs = sample_input(filenames[4*i+j])
+            inputs = read_data_from_file(filenames[4*i+j])
             inputs = torch.Tensor(inputs.to_numpy())
             
             split = torch.split(inputs,200) # split into 200 sample arrays
@@ -39,3 +46,31 @@ def split_data(X_dict):
                 X_train.append(X_dict[i][j])
                 
     return X_test, X_train, y_test, y_train
+
+def section_data(df, section_size=200):
+    all_data = torch.Tensor(df.to_numpy())
+    sections = [torch.transpose(s, 0, 1) for s in list(torch.split(all_data, section_size)) if s.shape[0]==section_size]
+    return sections
+
+# TODO: support train, cross-validation and test splits
+def extract_dataset(section_size=200):
+    dataset = {}
+    for user_i in range(5):
+        user = user_i + 1
+        user_dir = f"user_{user:04}"
+        user_data_path = os.path.join(DATA, user_dir)
+        user_files = [f for f in os.listdir(user_data_path) if isfile(os.path.join(user_data_path, f))]
+        for f in user_files:
+            filepath = os.path.join(user_data_path, f)
+            df = read_data_from_file(filepath)
+            sections = section_data(df, section_size=section_size)
+            if user in dataset:
+                dataset[user] += sections
+            else:
+                dataset[user] = sections
+
+    # print(dataset.keys())
+    # for k in dataset:
+    #     print(len(dataset[k]))
+    
+    return dataset
