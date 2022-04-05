@@ -40,6 +40,9 @@ def main():
     train_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='train', train_ratio=train_ratio)
     test_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='test', train_ratio=train_ratio)
     
+    train_labels = train_dataset.generate_labels()
+    test_labels = test_dataset.generate_labels()
+    
     loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     model = D2V(input_channels, input_length, output_channels, kernel_size, dilation_base)
