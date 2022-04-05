@@ -49,12 +49,16 @@ def split_data(X_dict):
 
 def section_data(df, section_size=200):
     all_data = torch.Tensor(df.to_numpy())
-    sections = [torch.transpose(s, 0, 1) for s in list(torch.split(all_data, section_size)) if s.shape[0]==section_size]
+    sections = []
+    for i in range(int((all_data.shape[0]-200)/40)+1):
+        sections.append(torch.transpose(all_data[40*i:200+40*i,:], 0, 1))
+    #sections = [torch.transpose(s, 0, 1) for s in list(torch.split(all_data, section_size)) if s.shape[0]==section_size]
     return sections
 
 # TODO: support train, cross-validation and test splits
-def extract_dataset(section_size=200):
-    dataset = {}
+def extract_dataset(modality, train_ratio=0.8, section_size=200):
+    train_dataset = {}
+    test_dataset = {}
     for user_i in range(5):
         user = user_i + 1
         user_dir = f"user_{user:04}"
@@ -64,13 +68,19 @@ def extract_dataset(section_size=200):
             filepath = os.path.join(user_data_path, f)
             df = read_data_from_file(filepath)
             sections = section_data(df, section_size=section_size)
-            if user in dataset:
-                dataset[user] += sections
+            train_size = round(train_ratio*len(sections))
+            if user in train_dataset:
+                train_dataset[user] += sections[:train_size]
+                test_dataset[user] += sections[train_size:]
             else:
-                dataset[user] = sections
+                train_dataset[user] = sections[:train_size]
+                test_dataset[user] = sections[train_size:]
 
     # print(dataset.keys())
     # for k in dataset:
     #     print(len(dataset[k]))
     
-    return dataset
+    if modality == 'train':
+        return train_dataset
+    else:
+        return test_dataset

@@ -35,9 +35,12 @@ def main():
     batch_size = 16
 
     epochs = 200
+    train_ratio = 0.8
 
-    dataset = DriverDataset(number_of_users=5, section_size=input_length)
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    train_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='train', train_ratio=train_ratio)
+    test_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='test', train_ratio=train_ratio)
+    
+    loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     model = D2V(input_channels, input_length, output_channels, kernel_size, dilation_base)
 

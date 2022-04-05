@@ -5,8 +5,8 @@ from torch.utils.data import Dataset, DataLoader
 from .helper import extract_dataset
 
 class DriverDataset(Dataset):
-    def __init__(self, number_of_users, section_size):
-        self.dataset = extract_dataset(section_size=section_size)
+    def __init__(self, number_of_users, section_size, modality, train_ratio):
+        self.dataset = extract_dataset(modality, train_ratio=train_ratio, section_size=section_size)
         self.users = set([i+1 for i in range(number_of_users)])
 
     def __len__(self):
