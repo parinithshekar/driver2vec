@@ -34,9 +34,22 @@ class DriverDataset(Dataset):
     
     def generate_labels(self):
         labels_list = []
-        for u in list(self.dataset.keys()):
-            labels_list += [u]*len(self.dataset[u])
+        for d in list(self.dataset.keys()):
+            labels_list += [d]*len(self.dataset[d])
         
         labels = np.array(labels_list)
         return labels
-            
+    
+    def get_lightgbm_inputs(self, drivers={1, 2}, binary=True):
+        inputs = []
+        labels = []
+        for driver in drivers:
+            inputs += self.dataset[driver]
+            labels += [driver for _ in range(len(self.dataset[driver]))]
+        
+        if (len(drivers)==2 and binary):
+            labels = [0 if driver==min(labels) else 1 for driver in labels]
+        
+        inputs = torch.stack(inputs)
+        labels = np.array(labels)
+        return inputs, labels

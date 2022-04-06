@@ -1,3 +1,4 @@
+from cgi import test
 from lightgbm import train
 import torch
 from torch import nn
@@ -12,9 +13,9 @@ from datetime import datetime
 from tqdm import tqdm
 
 from dataset.driver_dataset import DriverDataset
-from dataset import helper
+from dataset import features, helper
 from models.d2v import D2V
-from models.lightGBM import lightgbm
+from models.lightGBM import LightGBM
 
 torch.manual_seed(9090)
 np.random.seed(7080)
@@ -26,101 +27,17 @@ CURRENT_TIME = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
 DIR = os.path.dirname(os.path.abspath(__file__))
 SAVE_DIR = os.path.join(DIR, "trained_models")
 
+def test():
+    # x = pd.read_csv("./dataset/sample_data/user_0001/user_0001_highway.csv")
+    # x = x.drop(columns=["Unnamed: 0"])
+    # x = x.drop(columns=['FOG', 'FOG_LIGHTS', 'FRONT_WIPERS','HEAD_LIGHTS','RAIN', 'REAR_WIPERS', 'SNOW'])
+    # print(x.columns)
+
+    x = helper.extract_dataset(modality="test", drop_feature_groups=[features.ACCELERATION])
+    print(x[1][0].shape)
+
 def main():
-    # filenames = ["user_0001/user_0001_highway.csv", "user_0001/user_0001_suburban.csv", "user_0001/user_0001_tutorial.csv", "user_0001/user_0001_urban.csv", "user_0002/user_0002_highway.csv", "user_0002/user_0002_suburban.csv", "user_0002/user_0002_tutorial.csv", "user_0002/user_0002_urban.csv", "user_0003/user_0003_highway.csv", "user_0003/user_0003_suburban.csv", "user_0003/user_0003_tutorial.csv", "user_0003/user_0003_urban.csv", "user_0004/user_0004_highway.csv", "user_0004/user_0004_suburban.csv", "user_0004/user_0004_tutorial.csv", "user_0004/user_0004_urban.csv", "user_0005/user_0005_highway.csv", "user_0005/user_0005_suburban.csv", "user_0005/user_0005_tutorial.csv", "user_0005/user_0005_urban.csv"]
-    # X = {0: {0: [], 1: [], 2: [], 3: []}, 1: {0: [], 1: [], 2: [], 3: []}, 2: {0: [], 1: [], 2: [], 3: []}, 3: {0: [], 1: [], 2: [], 3: []}, 4: {0: [], 1: [], 2: [], 3: []} }
-    # y = {0: {0: [], 1: [], 2: [], 3: []}, 1: {0: [], 1: [], 2: [], 3: []}, 2: {0: [], 1: [], 2: [], 3: []}, 3: {0: [], 1: [], 2: [], 3: []}, 4: {0: [], 1: [], 2: [], 3: []} }
-    # X_dict = helper.extract_data(filenames, X)
-
-    input_channels = 31
-    input_length = 200
-    output_channels = 32
-    kernel_size = 16
-    dilation_base = 2
-    batch_size = 16
-
-    epochs = 1
-    train_ratio = 0.8
-
-    train_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='train', train_ratio=train_ratio)
-    test_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='test', train_ratio=train_ratio)
-    
-    train_labels = train_dataset.generate_labels()
-    test_labels = test_dataset.generate_labels()
-    
-    loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-
-    model = D2V(input_channels, input_length, output_channels, kernel_size, dilation_base)
-    model = model.to(device)
-
-    # Hyperparameters from the paper
-    optimizer = optim.Adam(model.parameters(), lr=0.0004, weight_decay=0.975)
-    triplet_loss = nn.TripletMarginLoss(margin=1)
-
-    model.train()
-    for epoch in tqdm(range(epochs), desc='Epochs'):
-        running_loss = []
-        for step, (anchor, positive, negative) in enumerate(tqdm(loader, desc="Training", leave=False)):
-            anchor = anchor.to(device)
-            positive = positive.to(device)
-            negative = negative.to(device)
-
-            optimizer.zero_grad()
-            anchor_output = model(anchor)
-            positive_output = model(positive)
-            negative_output = model(negative)
-
-            loss = triplet_loss(anchor_output, positive_output, negative_output)
-            loss.backward()
-            optimizer.step()
-    
-            running_loss.append(loss.cpu().detach().numpy())
-        print("Epoch: {}/{} - Loss: {:.4f}".format(epoch+1, epochs, np.mean(running_loss)))
-
-    #torch.save({
-    #    "model_state_dict": model.state_dict(),
-    #    "optimizer_state_dict": optimizer.state_dict()
-    #}, os.path.join(SAVE_DIR, f"d{CURRENT_TIME}_e{epochs}_b{batch_size}_l{input_length}.pth"))
-
-    #Get embeddings for lightGBM
-    model.eval()
-
-    inputs_lgbm = []
-    for key in train_dataset.dataset:
-        inputs_lgbm = inputs_lgbm + train_dataset.dataset[key]
-    inputs_lgbm = torch.stack(inputs_lgbm)
-    inputs_lgbm = inputs_lgbm.to(device)
-    embeddings = model(inputs_lgbm)
-
-    #Train lightGBM
-    classifier = lightgbm()
-    embeddings = embeddings.cpu().data.numpy()
-    classifier.train(embeddings,train_labels)
-
-    #Predict outputs
-    preds = classifier.predict(test_dataset)
-    print(preds)
-
-    return
-    
-    '''
-    filename1 = "user_0001/user_0001_highway.csv"
-    filename2 = "user_0001/user_0001_suburban.csv"
-
-    input1 = torch.Tensor((helper.sample_input(filename1)).to_numpy())
-    input2 = torch.Tensor((helper.sample_input(filename2)).to_numpy())
-
-    input1 = input1.reshape(1, input_channels, input_length)
-    input2 = input2.reshape(1, input_channels, input_length)
-    inputs = torch.cat([input1, input2])
-
-    model = D2V(input_channels, input_length, output_channels, kernel_size, dilation_base)
-    out = model(inputs)
-
-    print(out)
-    
-    return'''
-    
+    test()
 
 if __name__ == "__main__":
     main()

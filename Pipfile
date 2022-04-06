@@ -10,6 +10,7 @@ pywavelets = "*"
 pytorch-wavelets = {ref = "master", git = "https://github.com/fbcotter/pytorch_wavelets.git"}
 matplotlib = "*"
 tqdm = "*"
+lightgbm = "*"
 
 [dev-packages]
 
