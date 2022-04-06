@@ -23,21 +23,23 @@ DIR = os.path.dirname(os.path.abspath(__file__))
 SAVE_DIR = os.path.join(DIR, "trained_models")
 LATEST_MODEL = os.path.join(SAVE_DIR, f"latest.pt")
 
-def main():
+def build_train_save_tcn(drop_feature_groups=[]):
     save_latest = True
 
-    input_channels = 31
     input_length = 200
     output_channels = 32
     kernel_size = 16
     dilation_base = 2
     batch_size = 16
 
-    epochs = 50
+    epochs = 60
     train_ratio = 0.8
 
-    train_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='train', train_ratio=train_ratio)
+    train_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='train', train_ratio=train_ratio, drop_feature_groups=drop_feature_groups)
     # test_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='test', train_ratio=train_ratio)
+    
+    # input_channels = 31
+    input_channels = train_dataset.sample().shape[0]
     
     loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
@@ -68,11 +70,8 @@ def main():
             running_loss.append(loss.cpu().detach().numpy())
         print("Epoch: {}/{} - Loss: {:.4f}".format(epoch+1, epochs, np.mean(running_loss)))
 
-    save_path = os.path.join(SAVE_DIR, f"d{CURRENT_TIME}_e{epochs}_b{batch_size}_l{input_length}.pt")
-    torch.save(model.state_dict(), save_path)
+    # save_path = os.path.join(SAVE_DIR, f"d{CURRENT_TIME}_e{epochs}_b{batch_size}_l{input_length}.pt")
+    # torch.save(model.state_dict(), save_path)
 
     if(save_latest):
         torch.save(model.state_dict(), LATEST_MODEL)
-
-if __name__=="__main__":
-    main()

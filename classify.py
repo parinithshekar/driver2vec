@@ -20,9 +20,8 @@ DIR = os.path.dirname(os.path.abspath(__file__))
 SAVE_DIR = os.path.join(DIR, "trained_models")
 LATEST_MODEL = os.path.join(SAVE_DIR, f"latest.pt")
 
-def main():
+def train_classify_score_lgbm(drop_feature_groups=[]):
 
-    input_channels = 31
     input_length = 200
     output_channels = 32
     kernel_size = 16
@@ -30,8 +29,11 @@ def main():
 
     train_ratio = 0.8
 
-    train_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='train', train_ratio=train_ratio)
-    test_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='test', train_ratio=train_ratio)
+    train_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='train', train_ratio=train_ratio, drop_feature_groups=drop_feature_groups)
+    test_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='test', train_ratio=train_ratio, drop_feature_groups=drop_feature_groups)
+    
+    # input_channels = 31
+    input_channels = train_dataset.sample().shape[0]
 
     model = D2V(input_channels, input_length, output_channels, kernel_size, dilation_base)
     model.load_state_dict(torch.load(LATEST_MODEL))
@@ -63,7 +65,6 @@ def main():
         errors = np.abs(np.array(binary_predictions)-np.array(lgbm_test_labels))
         accuracy = 1 - np.sum(errors)/errors.size
         accuracies.append(accuracy)
-    print(f"Mean pairwise accuracy: {np.mean(accuracies)}")
-
-if __name__ == "__main__":
-    main()
+    
+    mean_accuracy = np.mean(accuracies)
+    return mean_accuracy

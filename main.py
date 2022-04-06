@@ -11,11 +11,15 @@ import os
 from datetime import datetime
 
 from tqdm import tqdm
+from tabulate import tabulate
 
 from dataset.driver_dataset import DriverDataset
 from dataset import features, helper
 from models.d2v import D2V
 from models.lightGBM import LightGBM
+
+from train import build_train_save_tcn
+from classify import train_classify_score_lgbm
 
 torch.manual_seed(9090)
 np.random.seed(7080)
@@ -33,11 +37,28 @@ def test():
     # x = x.drop(columns=['FOG', 'FOG_LIGHTS', 'FRONT_WIPERS','HEAD_LIGHTS','RAIN', 'REAR_WIPERS', 'SNOW'])
     # print(x.columns)
 
-    x = helper.extract_dataset(modality="test", drop_feature_groups=[features.ACCELERATION])
-    print(x[1][0].shape)
+    # x = helper.extract_dataset(modality="test", drop_feature_groups=[features.ACCELERATION])
+    # print(x[1][0].shape)
+
+    train_dataset = DriverDataset(number_of_users=5, section_size=200, modality='train', train_ratio=0.8, drop_feature_groups=[features.groups['DISTANCE_INFORMATION']])
+    input_channels = train_dataset.sample().shape[0]
+    print(input_channels)
 
 def main():
-    test()
+
+    all_results = {}
+
+    for feature_group, features_list in features.groups.items():
+        build_train_save_tcn(drop_feature_groups=[features_list])
+        accuracy_score = train_classify_score_lgbm(drop_feature_groups=[features_list])
+        all_results[feature_group] = accuracy_score
+    
+    build_train_save_tcn()
+    accuracy_score = train_classify_score_lgbm()
+    all_results['ALL_FEATURES'] = accuracy_score
+
+    table = tabulate([[k, v] for k, v in all_results.items()], headers=["DROPPED FEATURE GROUP", "PAIRWISE ACCURACY"])
+    print(table)
 
 if __name__ == "__main__":
     main()

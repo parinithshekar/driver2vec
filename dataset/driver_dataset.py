@@ -1,13 +1,18 @@
 import random as rd
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import numpy as np
 
 from .helper import extract_dataset
 
 class DriverDataset(Dataset):
-    def __init__(self, number_of_users, section_size, modality, train_ratio):
-        self.dataset = extract_dataset(modality, train_ratio=train_ratio, section_size=section_size)
+    def __init__(self, number_of_users, section_size, modality, train_ratio, drop_feature_groups=[]):
+        self.dataset = extract_dataset(
+            modality,
+            train_ratio=train_ratio,
+            section_size=section_size,
+            drop_feature_groups=drop_feature_groups
+        )
         self.users = set([i+1 for i in range(number_of_users)])
         
     def __len__(self):
@@ -39,6 +44,9 @@ class DriverDataset(Dataset):
         
         labels = np.array(labels_list)
         return labels
+    
+    def sample(self):
+        return list(self.dataset.values())[0][0]
     
     def get_lightgbm_inputs(self, drivers={1, 2}, binary=True):
         inputs = []

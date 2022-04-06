@@ -11,6 +11,7 @@ pytorch-wavelets = {ref = "master", git = "https://github.com/fbcotter/pytorch_w
 matplotlib = "*"
 tqdm = "*"
 lightgbm = "*"
+tabulate = "*"
 
 [dev-packages]
 
