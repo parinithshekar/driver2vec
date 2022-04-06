@@ -1,4 +1,4 @@
-import lightGBM as lgb
+import lightgbm as lgb
 
 class lightgbm():
     def __init__(self, num_leaves = 31, num_trees = 100, max_depth = 12, metric = 'binary_logloss', feature_fraction = 0.8, bagging_fraction = 0.9, lgb_num_iterations=15):
@@ -20,9 +20,9 @@ class lightgbm():
 
         self.lgb_num_iterations = lgb_num_iterations
 
-    def train(self,embeddings, driver):
+    def train(self,embeddings, drivers):
         #Put data into the lgb Dataset
-        lgb_train = lgb.Dataset(embeddings, driver) #Check how the data is being given
+        lgb_train = lgb.Dataset(embeddings, drivers) #Check how the data is being given
         #Train the model
         self.lgbm = lgb.train(self.params, lgb_train, self.lgb_num_iterations)
         #Plot the loss

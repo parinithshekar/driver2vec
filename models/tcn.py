@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.nn.utils import weight_norm
 import numpy as np
+#from zmq import device
 
 class TCN(nn.Module):
     def __init__(self,input_size,output_size,kernel_size,dilation_base,dropout):
@@ -56,9 +57,8 @@ class ResidualBlock(nn.Module):
         )
 
         self.residual_conv = nn.Conv1d(input_size, output_size, 1)
-        #Initialize weights and bias
+        #Initialize weights
         nn.init.kaiming_uniform_(self.residual_conv.weight)
-        #nn.init.kaiming_uniform_(self.residual_conv.bias)
 
     def forward(self, x):
         if self.input_size == self.output_size:
@@ -73,9 +73,8 @@ class CausalConvLayer(nn.Module):
         super(CausalConvLayer, self).__init__()
         self.padding = padding
         self.conv = nn.Conv1d(input_size,output_size,kernel_size,stride=1,padding=padding,dilation=dilation)
-        #Initialize weights and bias
+        #Initialize weights
         nn.init.kaiming_uniform_(self.conv.weight)
-        #nn.init.kaiming_uniform_(self.conv.bias)
 
 
     def forward(self, x):

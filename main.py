@@ -1,3 +1,4 @@
+from lightgbm import train
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
@@ -6,18 +7,22 @@ import pandas as pd
 import numpy as np
 import random as rd
 import os
+from datetime import datetime
 
 from tqdm import tqdm
 
 from dataset.driver_dataset import DriverDataset
 from dataset import helper
 from models.d2v import D2V
+from models.lightGBM import lightgbm
 
 torch.manual_seed(9090)
 np.random.seed(7080)
 rd.seed(4496)
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+CURRENT_TIME = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
 DIR = os.path.dirname(os.path.abspath(__file__))
 SAVE_DIR = os.path.join(DIR, "trained_models")
 
@@ -34,7 +39,7 @@ def main():
     dilation_base = 2
     batch_size = 16
 
-    epochs = 200
+    epochs = 1
     train_ratio = 0.8
 
     train_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='train', train_ratio=train_ratio)
@@ -46,6 +51,7 @@ def main():
     loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     model = D2V(input_channels, input_length, output_channels, kernel_size, dilation_base)
+    model = model.to(device)
 
     # Hyperparameters from the paper
     optimizer = optim.Adam(model.parameters(), lr=0.0004, weight_decay=0.975)
@@ -71,13 +77,33 @@ def main():
             running_loss.append(loss.cpu().detach().numpy())
         print("Epoch: {}/{} - Loss: {:.4f}".format(epoch+1, epochs, np.mean(running_loss)))
 
-    torch.save({
-        "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict()
-    }, os.path.join(SAVE_DIR, f"e{epochs}_b{batch_size}_l{input_length}.pth"))
+    #torch.save({
+    #    "model_state_dict": model.state_dict(),
+    #    "optimizer_state_dict": optimizer.state_dict()
+    #}, os.path.join(SAVE_DIR, f"d{CURRENT_TIME}_e{epochs}_b{batch_size}_l{input_length}.pth"))
+
+    #Get embeddings for lightGBM
+    model.eval()
+
+    inputs_lgbm = []
+    for key in train_dataset.dataset:
+        inputs_lgbm = inputs_lgbm + train_dataset.dataset[key]
+    inputs_lgbm = torch.stack(inputs_lgbm)
+    inputs_lgbm = inputs_lgbm.to(device)
+    embeddings = model(inputs_lgbm)
+
+    #Train lightGBM
+    classifier = lightgbm()
+    embeddings = embeddings.cpu().data.numpy()
+    classifier.train(embeddings,train_labels)
+
+    #Predict outputs
+    preds = classifier.predict(test_dataset)
+    print(preds)
+
     return
     
-    
+    '''
     filename1 = "user_0001/user_0001_highway.csv"
     filename2 = "user_0001/user_0001_suburban.csv"
 
@@ -93,7 +119,7 @@ def main():
 
     print(out)
     
-    return
+    return'''
     
 
 if __name__ == "__main__":
