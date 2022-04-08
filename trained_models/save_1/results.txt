@@ -1,0 +1,12 @@
+DROPPED FEATURE GROUP      PAIRWISE ACCURACY
+-----------------------  -------------------
+SPEED_ACCELERATION_ONLY             0.710237
+ACCELERATION                        0.641918
+DISTANCE_INFORMATION                0.667349
+GEARBOX                             0.72403
+LANE_INFORMATION                    0.680172
+PEDALS                              0.692672
+ROAD_ANGLE                          0.686315
+SPEED                               0.692349
+TURN_INDICATORS                     0.688039
+ALL_FEATURES                        0.713362

@@ -21,18 +21,23 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 CURRENT_TIME = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
 DIR = os.path.dirname(os.path.abspath(__file__))
 SAVE_DIR = os.path.join(DIR, "trained_models")
-LATEST_MODEL = os.path.join(SAVE_DIR, f"latest.pt")
+# LATEST_MODEL = os.path.join(SAVE_DIR, f"latest.pt")
 
-def build_train_save_tcn(drop_feature_groups=[]):
+def build_train_save_tcn(drop_feature_groups=[], save_prefix=""):
     save_latest = True
 
+    if (save_prefix == ""):
+        latest_model = os.path.join(SAVE_DIR, f"latest.pt")
+    else:
+        latest_model = os.path.join(SAVE_DIR, f"{save_prefix}_latest.pt")
+    
     input_length = 200
     output_channels = 32
     kernel_size = 16
     dilation_base = 2
     batch_size = 16
 
-    epochs = 60
+    epochs = 70
     train_ratio = 0.8
 
     train_dataset = DriverDataset(number_of_users=5, section_size=input_length, modality='train', train_ratio=train_ratio, drop_feature_groups=drop_feature_groups)
@@ -51,9 +56,9 @@ def build_train_save_tcn(drop_feature_groups=[]):
     triplet_loss = nn.TripletMarginLoss(margin=1)
 
     model.train()
-    for epoch in tqdm(range(epochs), desc='Epochs'):
+    for epoch in range(epochs):
         running_loss = []
-        for step, (anchor, positive, negative) in enumerate(tqdm(loader, desc="Training", leave=False)):
+        for step, (anchor, positive, negative) in enumerate(loader):
             anchor = anchor.to(device)
             positive = positive.to(device)
             negative = negative.to(device)
@@ -68,10 +73,11 @@ def build_train_save_tcn(drop_feature_groups=[]):
             optimizer.step()
     
             running_loss.append(loss.cpu().detach().numpy())
+
         print("Epoch: {}/{} - Loss: {:.4f}".format(epoch+1, epochs, np.mean(running_loss)))
 
     # save_path = os.path.join(SAVE_DIR, f"d{CURRENT_TIME}_e{epochs}_b{batch_size}_l{input_length}.pt")
     # torch.save(model.state_dict(), save_path)
 
     if(save_latest):
-        torch.save(model.state_dict(), LATEST_MODEL)
+        torch.save(model.state_dict(), latest_model)

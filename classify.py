@@ -18,9 +18,14 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 SAVE_DIR = os.path.join(DIR, "trained_models")
-LATEST_MODEL = os.path.join(SAVE_DIR, f"latest.pt")
+# LATEST_MODEL = os.path.join(SAVE_DIR, f"latest.pt")
 
-def train_classify_score_lgbm(drop_feature_groups=[]):
+def train_classify_score_lgbm(drop_feature_groups=[], model_prefix=""):
+
+    if (model_prefix == ""):
+        latest_model = os.path.join(SAVE_DIR, f"latest.pt")
+    else:
+        latest_model = os.path.join(SAVE_DIR, f"{model_prefix}_latest.pt")
 
     input_length = 200
     output_channels = 32
@@ -36,7 +41,7 @@ def train_classify_score_lgbm(drop_feature_groups=[]):
     input_channels = train_dataset.sample().shape[0]
 
     model = D2V(input_channels, input_length, output_channels, kernel_size, dilation_base)
-    model.load_state_dict(torch.load(LATEST_MODEL))
+    model.load_state_dict(torch.load(latest_model))
     model = model.to(device)
 
     model.eval()
