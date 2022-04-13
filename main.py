@@ -23,7 +23,7 @@ CURRENT_TIME = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
 DIR = os.path.dirname(os.path.abspath(__file__))
 SAVE_DIR = os.path.join(DIR, "trained_models")
 
-train = True
+train = False
 classify = True
 
 def misc():
